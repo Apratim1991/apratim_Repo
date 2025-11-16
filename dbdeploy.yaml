@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vprodb
+  labels:
+    app: vprodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vprodb
+  template:
+    metadata:
+      labels:
+        app: vprodb
+    spec:
+      containers:
+      - name: vprodb
+        image: apratim1991/vprofiledb:latest
+        volumemounts:
+        - name: vprodb-storage
+          mountPath: /var/lib/mysql
+        ports:
+        - name: vprodb-port
+          containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-Secret
+              key: db-pass
+      volumes:
+      - name: vprodb-storage
+        persistentVolumeClaim:
+          claimName: my-ebs-pvc
+      initcontainers:
+      - name: busybox
+        image: busybox
+        args: ["rm", "-rf", "/var/lib/mysql/lost+found"]
+        volumemounts: 
+        - name: vprodb-storage
+          mountPath: /var/lib/mysql
